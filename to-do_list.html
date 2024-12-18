@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .form-group button {
+            padding: 12px 18px;
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-group button:hover {
+            background-color: #16a085;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #f9fbfd;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        ul li span {
+            flex-grow: 1;
+        }
+
+        ul li:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        ul li.completed span {
+            text-decoration: line-through;
+            color: #95a5a6;
+        }
+
+        ul li button {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        ul li button:last-child {
+            margin-right: 0;
+        }
+
+        ul li .delete-button {
+            background-color: #e74c3c;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        ul li .delete-button:hover {
+            background-color: #c0392b;
+        }
+
+        ul li .complete-button {
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        ul li .complete-button:hover {
+            background-color: #2980b9;
+        }
+
+        #quote-container {
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+
+        #quote-container button {
+            margin-top: 10px;
+            padding: 10px 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #quote-container button:hover {
+            background-color: #2980b9;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>To-Do List</h1>
+        <div id="quote-container">
+            <div id="quote">Kliknutím na tlačítko získáte citát o štěstí!</div>
+            <button id="fetch-quote">Citát</button>
+        </div>
+        <div class="form-group">
+            <input type="text" id="task-input" placeholder="Vložte nový úkol">
+            <button id="add-task">Přidat</button>
+        </div>
+        <ul id="task-list"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskInput = document.getElementById('task-input');
+            const addTaskButton = document.getElementById('add-task');
+            const taskList = document.getElementById('task-list');
+            const quoteContainer = document.getElementById('quote');
+            const fetchQuoteButton = document.getElementById('fetch-quote');
+
+            // Load tasks from localStorage
+            const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            savedTasks.forEach(task => {
+                addTaskToDOM(task.text, task.completed);
+            });
+
+            // Add task to the list and save to localStorage
+            addTaskButton.addEventListener('click', () => {
+                const taskText = taskInput.value.trim();
+                if (taskText === '') {
+                    alert('Prosím, zadejte úkol.');
+                    return;
+                }
+
+                addTaskToDOM(taskText, false);
+                saveTaskToLocalStorage(taskText, false);
+                taskInput.value = '';
+            });
+
+            function addTaskToDOM(taskText, completed) {
+                const listItem = document.createElement('li');
+                if (completed) {
+                    listItem.classList.add('completed');
+                }
+
+                const taskTextElement = document.createElement('span');
+                taskTextElement.textContent = taskText;
+
+                const completeButton = document.createElement('button');
+                completeButton.textContent = 'Splněno';
+                completeButton.classList.add('complete-button');
+                completeButton.addEventListener('click', () => {
+                    listItem.classList.toggle('completed');
+                    updateTaskInLocalStorage(taskText);
+                });
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Smazat';
+                deleteButton.classList.add('delete-button');
+                deleteButton.addEventListener('click', () => {
+                    taskList.removeChild(listItem);
+                    removeTaskFromLocalStorage(taskText);
+                });
+
+                listItem.appendChild(taskTextElement);
+                listItem.appendChild(completeButton);
+                listItem.appendChild(deleteButton);
+                taskList.appendChild(listItem);
+            }
+
+            function saveTaskToLocalStorage(taskText, completed) {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks.push({ text: taskText, completed });
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+
+            function updateTaskInLocalStorage(taskText) {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                const task = tasks.find(t => t.text === taskText);
+                if (task) {
+                    task.completed = !task.completed;
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                }
+            }
+
+            function removeTaskFromLocalStorage(taskText) {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                const updatedTasks = tasks.filter(task => task.text !== taskText);
+                localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+            }
+
+            // Fetch a motivational quote using API Ninjas
+            fetchQuoteButton.addEventListener('click', () => {
+                fetch('https://api.api-ninjas.com/v1/quotes?category=happiness', {
+                    method: 'GET',
+                    headers: {
+                        'X-Api-Key': 'OAL6Fmxs9QjPf4YUwZzfAA==9I0bg1JJ0pZDhiKP' // API key
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Odezva sítě nebyla v pořádku.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.length > 0) {
+                            quoteContainer.textContent = data[0].quote;
+                        } else {
+                            quoteContainer.textContent = 'Momentálně nejsou k dispozici žádné citáty. Zkuste to prosím později.';
+                        }
+                    })
+                    .catch(error => {
+                        quoteContainer.textContent = 'Citát se nepodařilo načíst. Zkuste to prosím později.';
+                        console.error('Error fetching quote:', error);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
